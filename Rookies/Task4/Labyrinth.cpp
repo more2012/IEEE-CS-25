@@ -1,65 +1,83 @@
 #include <iostream>
-#include <queue>
 #include <vector>
+#include <queue>
 #include <string>
 
 using namespace std;
 
-int dx[] = {-1, 1, 0, 0};
-int dy[] = {0, 0, -1, 1};
-char dir[] = {'U', 'D', 'L', 'R'};
+struct Point {
+    int x, y;
+};
 
 int main() {
     int n, m;
     cin >> n >> m;
 
-    vector<vector<char>> map(n, vector<char>(m));
-
-    int sx, sy, ex, ey;
+    vector<string> grid(n);
+    Point start, end;
     for (int i = 0; i < n; i++) {
+        cin >> grid[i];
         for (int j = 0; j < m; j++) {
-            cin >> map[i][j];
-            if (map[i][j] == 'A') {
-                sx = i;
-                sy = j;
-            } else if (map[i][j] == 'B') {
-                ex = i;
-                ey = j;
-            }
+            if (grid[i][j] == 'A') start = {i, j};
+            if (grid[i][j] == 'B') end = {i, j};
         }
     }
-
-    queue<pair<pair<int, int>, string>> q;
-    q.push({{sx, sy}, ""});
 
     vector<vector<bool>> visited(n, vector<bool>(m, false));
-    visited[sx][sy] = true;
+    vector<vector<Point>> parent(n, vector<Point>(m, {-1, -1}));
+    vector<vector<char>> direction(n, vector<char>(m, ' '));
+
+    int dx[] = {-1, 1, 0, 0}; // Up, Down, Left, Right
+    int dy[] = {0, 0, -1, 1};
+    char dir[] = {'U', 'D', 'L', 'R'};
+
+    queue<Point> q;
+    q.push(start);
+    visited[start.x][start.y] = true;
 
     while (!q.empty()) {
-        int x = q.front().first.first;
-        int y = q.front().first.second;
-        string path = q.front().second;
+        Point curr = q.front();
         q.pop();
 
-        if (x == ex && y == ey) {
-            cout << "YES" << endl;
-            cout << path.length() << endl;
-            cout << path << endl;
-            return 0;
-        }
+        if (curr.x == end.x && curr.y == end.y) break;
 
         for (int i = 0; i < 4; i++) {
-            int nx = x + dx[i];
-            int ny = y + dy[i];
+            int nx = curr.x + dx[i];
+            int ny = curr.y + dy[i];
 
-            if (nx >= 0 && nx < n && ny >= 0 && ny < m && map[nx][ny] != '#' && !visited[nx][ny]) {
-                q.push({{nx, ny}, path + dir[i]});
+            if (nx >= 0 && ny >= 0 && nx < n && ny < m && !visited[nx][ny] && grid[nx][ny] != '#') {
                 visited[nx][ny] = true;
+                parent[nx][ny] = curr;
+                direction[nx][ny] = dir[i];
+                q.push({nx, ny});
             }
         }
     }
 
-    cout << "NO" << endl;
+    if (!visited[end.x][end.y]) {
+        cout << "NO\n";
+        return 0;
+    }
+
+    cout << "YES\n";
+    string path;
+    Point curr = end;
+    while (curr.x != start.x || curr.y != start.y) {
+        char d = direction[curr.x][curr.y];
+        path += d;
+        int idx = -1;
+        for (int i = 0; i < 4; i++) {
+            if (dir[i] == d) {
+                idx = i;
+                break;
+            }
+        }
+        curr = parent[curr.x - dx[idx]][curr.y - dy[idx]];
+    }
+
+    reverse(path.begin(), path.end());
+    cout << path.length() << '\n';
+    cout << path << '\n';
 
     return 0;
 }
